@@ -1,0 +1,160 @@
+-- File: LocalScript
+-- Location: game.StarterPlayer.StarterPlayerScripts
+
+-- Services
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- The list of valid keys.
+-- WARNING: This is now on the client and is not secure.
+local VALID_KEYS = {
+	"FL2k9Pz7qR4aT3wX%h@7ldi!kspaF",
+	"8jK9Pq7sL5tX2yZ",
+	"wM4nB6vC9xZ2aL"
+}
+
+-- The Linkvertise link for the user to copy.
+local LINKVERTISE_LINK = "https://link-target.net/1382102/fsopyuPI7Sgf"
+
+-- Main function to create and handle the key system GUI.
+local function createKeyGui()
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "KeySystemGui"
+	screenGui.Parent = player:WaitForChild("PlayerGui")
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0, 250, 0, 150)
+	frame.Position = UDim2.new(0.5, -125, 0.5, -75)
+	frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+	frame.Parent = screenGui
+
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.Size = UDim2.new(1, 0, 0, 30)
+	titleLabel.Text = "Enter Key"
+	titleLabel.Font = Enum.Font.SourceSansBold
+	titleLabel.TextColor3 = Color3.new(1, 1, 1)
+	titleLabel.BackgroundTransparency = 1
+	titleLabel.Parent = frame
+
+	local keyInput = Instance.new("TextBox")
+	keyInput.Size = UDim2.new(1, -20, 0, 30)
+	keyInput.Position = UDim2.new(0, 10, 0, 40)
+	keyInput.PlaceholderText = "Paste your key here..."
+	keyInput.Font = Enum.Font.SourceSans
+	keyInput.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+	keyInput.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+	keyInput.Parent = frame
+
+	local verifyButton = Instance.new("TextButton")
+	verifyButton.Size = UDim2.new(1, -20, 0, 30)
+	verifyButton.Position = UDim2.new(0, 10, 0, 80)
+	verifyButton.Text = "Verify Key"
+	verifyButton.Font = Enum.Font.SourceSansBold
+	verifyButton.TextColor3 = Color3.new(1, 1, 1)
+	verifyButton.BackgroundColor3 = Color3.new(0, 0.5, 1)
+	verifyButton.Parent = frame
+	
+	-- Connect the verify button to the key check function.
+	verifyButton.MouseButton1Click:Connect(function()
+		local enteredKey = keyInput.Text
+		local keyIsValid = false
+		
+		-- Check the entered key against the local list.
+		for i, validKey in ipairs(VALID_KEYS) do
+			if enteredKey == validKey then
+				keyIsValid = true
+				-- For this local test, we'll remove it so it can't be used again in this session.
+				table.remove(VALID_KEYS, i)
+				break
+			end
+		end
+
+		if keyIsValid then
+			print("Access granted! Showing executor GUI.")
+			-- Destroy the key GUI.
+			screenGui:Destroy()
+			-- Create the executor GUI.
+			createTweenExecutorGui()
+		else
+			print("Invalid key.")
+			-- Optional: you can show an on-screen message here.
+		end
+	end)
+
+	local copyLinkButton = Instance.new("TextButton")
+	copyLinkButton.Size = UDim2.new(1, -20, 0, 30)
+	copyLinkButton.Position = UDim2.new(0, 10, 0, 120)
+	copyLinkButton.Text = "Copy Link"
+	copyLinkButton.Font = Enum.Font.SourceSans
+	copyLinkButton.TextColor3 = Color3.new(1, 1, 1)
+	copyLinkButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+	copyLinkButton.Parent = frame
+	
+	-- Connect the copy link button.
+	copyLinkButton.MouseButton1Click:Connect(function()
+		pcall(function()
+			UserInputService:SetClipboard(LINKVERTISE_LINK)
+			print("Link copied to clipboard!")
+		end)
+	end)
+end
+
+-- This function will be called once the key is verified.
+local function createTweenExecutorGui()
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "ExecutorGui"
+	screenGui.Parent = player:WaitForChild("PlayerGui")
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0, 200, 0, 100)
+	frame.Position = UDim2.new(0, 10, 0, 10)
+	frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+	frame.BorderSizePixel = 0
+	frame.Parent = screenGui
+
+	local coordinateInput = Instance.new("TextBox")
+	coordinateInput.Size = UDim2.new(1, -20, 0, 30)
+	coordinateInput.Position = UDim2.new(0, 10, 0, 10)
+	coordinateInput.PlaceholderText = "Enter coordinates here (e.g., -141, -179, 57)"
+	coordinateInput.Font = Enum.Font.SourceSans
+	coordinateInput.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+	coordinateInput.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+	coordinateInput.Parent = frame
+
+	local startButton = Instance.new("TextButton")
+	startButton.Size = UDim2.new(1, -20, 0, 40)
+	startButton.Position = UDim2.new(0, 10, 0, 50)
+	startButton.Text = "Start Tweening"
+	startButton.Font = Enum.Font.SourceSansBold
+	startButton.TextColor3 = Color3.new(1, 1, 1)
+	startButton.BackgroundColor3 = Color3.new(0, 0.5, 1)
+	startButton.Parent = frame
+	
+	local function startTween()
+		pcall(function()
+			local character = player.Character or player.CharacterAdded:Wait()
+			local rootPart = character:WaitForChild("HumanoidRootPart")
+
+			local coordinateText = coordinateInput.Text
+			local x, y, z = coordinateText:match("%-?%d+%.?%d*"), coordinateText:match("%-?%d+%.?%d*", coordinateText:find(",", 1) + 1), coordinateText:match("%-?%d+%.?%d*", coordinateText:find(",", coordinateText:find(",", 1) + 1) + 1)
+
+			if x and y and z then
+				local targetPosition = Vector3.new(tonumber(x), tonumber(y), tonumber(z))
+				local tweenInfo = TweenInfo.new(2)
+				local goal = { Position = targetPosition }
+				local tween = TweenService:Create(rootPart, tweenInfo, goal)
+				tween:Play()
+				print("Successfully tweened to " .. tostring(targetPosition) .. "!")
+			else
+				print("Error: Invalid coordinate format. Please use the format: X, Y, Z.")
+			end
+		end)
+	end
+	
+	startButton.MouseButton1Click:Connect(startTween)
+end
+
+-- Create the initial key GUI.
+createKeyGui()
